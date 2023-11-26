@@ -1,0 +1,16 @@
+.main {
+    position: relative;
+}
+
+.canvas {
+    display: block;
+}
+
+.buttons {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
