@@ -1,19 +1,24 @@
 import React, { useState, useRef, useEffect } from 'react';
-import ReactSVG from 'react-svg';
 import styled from 'styled-components';
 import './style.css'
+import drawIcon from './svgs/draw.svg';
+import dookieIcon from './svgs/dookie.svg';
+import curveIcon from './svgs/curve.svg';
+import laserIcon from './svgs/laser.svg';
+import pawIcon from './svgs/paw.png';
+import eraseIcon from './svgs/erase.svg';
 
 const Button = styled.button`
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   background-color: white;
   border: 1px solid black;
   border-radius: 10px;
 `;
 
 const SelectedButton = styled.button`
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   background-color: #89CFF0;
   border: 1px solid #89CFF0;
   border-radius: 10px;
@@ -32,6 +37,14 @@ interface curveMetadatum {
   color: string;
 }
 
+interface circleMetadatum {
+  x: number;
+  y: number;
+  radius: number;
+  width: number;
+  color: string;
+}
+
 function DrawingCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
@@ -40,6 +53,7 @@ function DrawingCanvas() {
   const [strokes, setStrokes] = useState<Array<Array<{ x: number; y: number; width: number; color: string; }>>>([]);
   const [bezierPoints, setBezierPoints] = useState<{x: number, y: number}[]>([]);
   const [curveMetadata, setCurveMetadata] = useState<curveMetadatum[]>([]);
+  const [circleMetadata, setCircleMetadata] = useState<circleMetadatum[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>('#000000');
   const [showWidthSlider, setShowWidthSlider] = useState(false);
   const [widthValue, setWidthValue] = useState(5);
@@ -62,6 +76,8 @@ function DrawingCanvas() {
     if (confirm("Clearing the dookie will erase your glorious creation. Are you sure you want to continue?")) {
       setStrokes([]);
       setBezierPoints([]);
+      setCurveMetadata([]);
+      setCircleMetadata([]);
       setMode('draw');
     } 
   }
@@ -234,6 +250,15 @@ function DrawingCanvas() {
           context.globalAlpha = 1;
           context.stroke();
         });
+
+        circleMetadata.forEach((circle, index) => {
+          context.beginPath();
+          context.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
+          context.lineWidth = widthValue;
+          context.strokeStyle = selectedColor;
+          context.globalAlpha = 1;
+          context.stroke();
+        });
         
         // Draw the short trail
         if (mousePositions.length > 1) {
@@ -260,7 +285,7 @@ function DrawingCanvas() {
         cancelAnimationFrame(animationFrameId);
       };
     }
-  }, [curveMetadata, mode, mousePositions, strokes]);
+  }, [circleMetadata, curveMetadata, mode, mousePositions, selectedColor, strokes, widthValue]);
 
   // Keyboardin input
   useEffect(() => {
@@ -272,7 +297,7 @@ function DrawingCanvas() {
       if (!context) return;
       
       if (event.key === 'R' || event.key === 'r') {
-        console.log('R pressed');
+        // console.log('R pressed');
         strokes.forEach((stroke, index) => {
           if (mode === 'select' && index === selectedStroke) {
             const minX = Math.min(...stroke.map(point => point.x));
@@ -305,7 +330,7 @@ function DrawingCanvas() {
         });
         setMode("draw");
       } else if (event.key === 'L' || event.key === 'l') {
-        console.log('L pressed');
+        // console.log('L pressed');
         context.clearRect(0, 0, canvas.width, canvas.height);
 
         strokes.forEach((stroke, index) => {
@@ -338,6 +363,48 @@ function DrawingCanvas() {
           }
         });
         setMode("draw");
+      } else if (event.key === 'C' || event.key === 'c') {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        strokes.forEach((stroke, index) => {
+          if (mode === 'select' && index === selectedStroke) {
+            const minX = Math.min(...stroke.map(point => point.x));
+            const minY = Math.min(...stroke.map(point => point.y));
+            const maxX = Math.max(...stroke.map(point => point.x));
+            const maxY = Math.max(...stroke.map(point => point.y));
+        
+            strokes[index] = []
+
+            const centerX = (minX + maxX) / 2;
+            const centerY = (minY + maxY) / 2;
+            const radius = Math.max(maxX - centerX, maxY - centerY);
+            setCircleMetadata(prev => [...prev, {
+              x: centerX,
+              y: centerY,
+              radius: radius,
+              width: widthValue,
+              color: selectedColor,
+            }]);
+
+            context.beginPath();
+            context.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            context.lineWidth = widthValue;
+            context.strokeStyle = selectedColor;
+            context.stroke();
+          } else {
+            context.beginPath();
+            // If not selected, draw the current stroke
+            stroke.forEach(({ x, y, width }, i) => {
+              if (i === 0) {
+                context.moveTo(x, y);
+              } else {
+                context.lineTo(x, y);
+                context.lineWidth = width;
+              }
+            });
+            context.stroke();
+          }
+        });
+        setMode("draw");
       }
     };
 
@@ -346,7 +413,7 @@ function DrawingCanvas() {
     return () => {
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, [mode, selectedColor, selectedStroke, strokes]);
+  }, [mode, selectedColor, selectedStroke, strokes, widthValue]);
 
   // selection opacity
   useEffect(() => {
@@ -397,7 +464,21 @@ function DrawingCanvas() {
       }
       context.stroke();
     });
-  }, [strokes, mode, selectedStroke, selectedColor, curveMetadata]);
+
+    circleMetadata.forEach((circle, index) => {
+      context.beginPath();
+      context.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
+      context.lineWidth = widthValue;
+      context.strokeStyle = selectedColor;
+
+      if (mode === 'select') {
+        context.globalAlpha = 0.1;
+      } else {
+        context.globalAlpha = 1;
+      }
+      context.stroke();
+    });
+  }, [strokes, mode, selectedStroke, selectedColor, curveMetadata, circleMetadata, widthValue]);
 
   // all bezier curve is under this
 
@@ -418,18 +499,18 @@ function DrawingCanvas() {
             setCurveMetadata(prev => [
               ...prev, 
               {
-                  startX: bezierPoints[0].x,
-                  startY: bezierPoints[0].y,
-                  controlX1: bezierPoints[2].x,
-                  controlY1: bezierPoints[2].y,
-                  controlX2: bezierPoints[3].x,
-                  controlY2: bezierPoints[3].y,
-                  endX: bezierPoints[1].x,
-                  endY: bezierPoints[1].y,
-                  width: widthValue,
-                  color: selectedColor,
+                startX: bezierPoints[0].x,
+                startY: bezierPoints[0].y,
+                controlX1: bezierPoints[2].x,
+                controlY1: bezierPoints[2].y,
+                controlX2: bezierPoints[3].x,
+                controlY2: bezierPoints[3].y,
+                endX: bezierPoints[1].x,
+                endY: bezierPoints[1].y,
+                width: widthValue,
+                color: selectedColor,
               }
-          ]);
+            ]);
             context.beginPath();
             context.moveTo(bezierPoints[0].x, bezierPoints[0].y);
             context.bezierCurveTo(
@@ -457,19 +538,19 @@ function DrawingCanvas() {
         style={{ position: 'absolute', left: 0, top: 0 }}
       />
       <div className='buttons'>
-        {mode === "draw" ? <SelectedButton onClick={() => setMode('draw')}><ReactSVG src="svgs/draw.svg"/></SelectedButton> : <Button onClick={() => setMode('draw')}>Draw</Button>}
-        {mode === "erase" ? <SelectedButton onClick={() => setMode('erase')}><ReactSVG src="svgs/erase.svg"/></SelectedButton> : <Button onClick={() => setMode('erase')}>Erase</Button>}
-        {mode === "select" ? <SelectedButton onClick={() => setMode('select')}>Select</SelectedButton> : <Button onClick={() => setMode('select')}>Select</Button>}
-        {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}><ReactSVG src="svgs/curve.svg"/></SelectedButton> : <Button onClick={() => setMode('curve')}>Curve</Button>}
-        {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}><ReactSVG src="svgs/laser.svg"/></SelectedButton> : <Button onClick={() => setMode('laser')}>Laser</Button>}
-        {mode === "clear" ? <SelectedButton onClick={() => setMode('clear')}><ReactSVG src="svgs/dookie.svg"/></SelectedButton> : <Button onClick={() => {setMode('clear'); confirmClear()}}>Clear</Button>}
+        {mode === "draw" ? <SelectedButton onClick={() => setMode('draw')}><img src={drawIcon} alt='Draw'/></SelectedButton> : <Button onClick={() => setMode('draw')}><img src={drawIcon} alt='Draw'/></Button>}
+        {mode === "erase" ? <SelectedButton onClick={() => setMode('erase')}><img src={eraseIcon} alt='Erase'/></SelectedButton> : <Button onClick={() => setMode('erase')}><img src={eraseIcon} alt='Erase'/></Button>}
+        {mode === "select" ? <SelectedButton onClick={() => setMode('select')}><img src={pawIcon} alt='Select'/></SelectedButton> : <Button onClick={() => setMode('select')}><img src={pawIcon} alt='Select'/></Button>}
+        {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}><img src={curveIcon} alt='Curve'/></SelectedButton> : <Button onClick={() => setMode('curve')}><img src={curveIcon} alt='Curve'/></Button>}
+        {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}><img src={laserIcon} alt='Laser'/></SelectedButton> : <Button onClick={() => setMode('laser')}><img src={laserIcon} alt='Laser'/></Button>}
+        {mode === "clear" ? <SelectedButton onClick={() => setMode('clear')}><img src={dookieIcon} alt='Clear'/></SelectedButton> : <Button onClick={() => {setMode('clear'); confirmClear()}}><img src={dookieIcon} alt='Clear'/></Button>}
         <input
           type="color"
           value={selectedColor}
           onChange={handleColorChange}
           style={{
-            width: '40px',
-            height: '40px',
+            width: '50px',
+            height: '50px',
             borderRadius: '10px',
             appearance: 'none', // Remove default styles (e.g., iOS appearance)
             outline: 'none', // Remove outline on focus

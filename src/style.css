@@ -15,9 +15,14 @@
     gap: 10px;
 }
 
+.buttons img {
+    max-width: 40px;
+    max-height: 40px;
+}
+
 .colorPicker {
-    width: 40px;
-    height: 40px;
+    width: 50px;
+    height: 50px;
     border-radius: 10px;
     cursor: pointer;
  }
