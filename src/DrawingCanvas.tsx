@@ -34,7 +34,7 @@ interface curveMetadatum {
 function DrawingCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [mode, setMode] = useState<'draw' | 'erase' | 'select' | 'curve' | 'laser'>('draw');
+  const [mode, setMode] = useState<'draw' | 'erase' | 'select' | 'curve' | 'laser' | 'clear'>('draw');
   const [selectedStroke, setSelectedStroke] = useState<number | null>(null);
   const [strokes, setStrokes] = useState<Array<Array<{ x: number; y: number; width: number; color: string; }>>>([]);
   const [bezierPoints, setBezierPoints] = useState<{x: number, y: number}[]>([]);
@@ -55,6 +55,15 @@ function DrawingCanvas() {
   const handleSliderChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setWidthValue(Number(event.target.value));
   };
+
+  function confirmClear() {
+    // eslint-disable-next-line no-restricted-globals
+    if (confirm("Clearing the dookie will erase your glorious creation. Are you sure you want to continue?")) {
+      setStrokes([]);
+      setBezierPoints([]);
+      setMode('draw');
+    } 
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -452,6 +461,7 @@ function DrawingCanvas() {
         {mode === "select" ? <SelectedButton onClick={() => setMode('select')}>Select</SelectedButton> : <Button onClick={() => setMode('select')}>Select</Button>}
         {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}>Curve</SelectedButton> : <Button onClick={() => setMode('curve')}>Curve</Button>}
         {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}>Laser</SelectedButton> : <Button onClick={() => setMode('laser')}>Laser</Button>}
+        {mode === "clear" ? <SelectedButton onClick={() => setMode('clear')}>Clear</SelectedButton> : <Button onClick={() => {setMode('clear'); confirmClear()}}>Clear</Button>}
         <input
           type="color"
           value={selectedColor}
