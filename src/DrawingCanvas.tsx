@@ -18,22 +18,31 @@ const SelectedButton = styled.button`
   border-radius: 10px;
 `;
 
-interface Point {
-  x: number;
-  y: number;
+interface curveMetadatum {
+  startX: number;
+  startY: number;
+  controlX1: number;
+  controlY1: number;
+  controlX2: number;
+  controlY2: number;
+  endX: number;
+  endY: number;
+  width: number;
+  color: string;
 }
 
 function DrawingCanvas() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [isDrawing, setIsDrawing] = useState<boolean>(false);
-  const [mode, setMode] = useState<'draw' | 'erase' | 'select' | 'curve'>('draw');
+  const [mode, setMode] = useState<'draw' | 'erase' | 'select' | 'curve' | 'laser'>('draw');
   const [selectedStroke, setSelectedStroke] = useState<number | null>(null);
   const [strokes, setStrokes] = useState<Array<Array<{ x: number; y: number; width: number; color: string; }>>>([]);
-  const [isDrawingCurve, setIsDrawingCurve] = useState(false);
-  const [controlPoints, setControlPoints] = useState<Point[]>([]);
+  const [bezierPoints, setBezierPoints] = useState<{x: number, y: number}[]>([]);
+  const [curveMetadata, setCurveMetadata] = useState<curveMetadatum[]>([]);
   const [selectedColor, setSelectedColor] = useState<string>('#000000');
   const [showWidthSlider, setShowWidthSlider] = useState(false);
   const [widthValue, setWidthValue] = useState(5);
+  const [mousePositions, setMousePositions] = useState<{x: number, y: number}[]>([]);
   
   const handleColorChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedColor(event.target.value);
@@ -76,6 +85,10 @@ function DrawingCanvas() {
         setSelectedStroke((prevSelectedStroke) =>
           prevSelectedStroke === clickedStrokeIndex ? null : clickedStrokeIndex
         );
+      } else if (mode === 'curve') {
+        const x = offsetX;
+        const y = offsetY;
+        setBezierPoints(prev => [...prev, { x, y }]);
       } else {
         // Start drawing new strokes
         setIsDrawing(true);
@@ -137,19 +150,24 @@ function DrawingCanvas() {
     if (!context) return;
 
     const handleWheel = (event: WheelEvent) => {
-      const delta = event.deltaY;
-      strokes.forEach((stroke, index) => {
-        if (mode === 'select' && index === selectedStroke) {
-          context.lineWidth = delta;
-          stroke.forEach((point, index) => {
-            stroke[index].width = delta;
-          });
-          context.stroke();
-        } else {
-          context.stroke();
-        }
-      });
+      if (mode === 'select' && selectedStroke !== null) {
+        const delta = Math.sign(event.deltaY) * 1; // This controls the rate of change in stroke width
+        setStrokes(prevStrokes => {
+          const newStrokes = [...prevStrokes];
+          const currentStroke = newStrokes[selectedStroke];
+          const newWidth = Math.max(1, currentStroke[0].width + delta); // Ensures width doesn't go below 1
+    
+          // Update width for each point in the stroke
+          newStrokes[selectedStroke] = currentStroke.map(point => ({
+            ...point,
+            width: newWidth
+          }));
+    
+          return newStrokes;
+        });
+      }
     };
+    
 
     canvas.addEventListener('wheel', handleWheel);
 
@@ -157,6 +175,82 @@ function DrawingCanvas() {
       canvas.removeEventListener('wheel', handleWheel);
     };
   }, [mode, selectedStroke, strokes]);
+
+  // laser pointer
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    if (mode === 'laser') {
+      const handleMouseMove = (event: MouseEvent) => {
+        const { offsetX, offsetY } = event;
+        setMousePositions(prev => [...prev.slice(-10), { x: offsetX, y: offsetY }]);
+      };
+
+      let animationFrameId: number;
+  
+      const draw = () => {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+  
+        strokes.forEach((stroke, index) => {
+          context.beginPath();
+          stroke.forEach(({ x, y, width, color }, i) => {
+            if (i === 0) {
+              context.moveTo(x, y);
+            } else {
+              context.lineTo(x, y);
+              context.lineWidth = width;
+              context.strokeStyle = color;
+            }
+          });
+          context.globalAlpha = 1;
+          context.stroke();
+        });
+    
+        curveMetadata.forEach((curve, index) => {
+          context.beginPath();
+          context.moveTo(curve.startX, curve.startY);
+          context.bezierCurveTo(
+            curve.controlX1, curve.controlY1,
+            curve.controlX2, curve.controlY2,
+            curve.endX, curve.endY
+          );
+          context.lineWidth = curve.width;
+          context.strokeStyle = curve.color;
+  
+          context.globalAlpha = 1;
+          context.stroke();
+        });
+        
+        // Draw the short trail
+        if (mousePositions.length > 1) {
+          context.beginPath();
+          context.moveTo(mousePositions[0].x, mousePositions[0].y);
+          mousePositions.forEach((pos, index) => {
+            context.lineTo(pos.x, pos.y);
+            context.strokeStyle = `rgba(255, 0, 0, ${1 - index / mousePositions.length})`;
+            context.lineWidth = 2;
+            context.stroke();
+            context.beginPath();
+            context.moveTo(pos.x, pos.y);
+          });
+        }
+  
+        animationFrameId = requestAnimationFrame(draw);
+      };
+  
+      canvas.addEventListener('mousemove', handleMouseMove as EventListener);
+      animationFrameId = requestAnimationFrame(draw);
+  
+      return () => {
+        canvas.removeEventListener('mousemove', handleMouseMove as EventListener);
+        cancelAnimationFrame(animationFrameId);
+      };
+    }
+  }, [curveMetadata, mode, mousePositions, strokes]);
 
   // Keyboardin input
   useEffect(() => {
@@ -185,7 +279,7 @@ function DrawingCanvas() {
               { x: minX, y: minY, width, color: selectedColor },
             ];
           }
-
+          
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.beginPath();
           // If not selected, draw the current stroke
@@ -199,6 +293,7 @@ function DrawingCanvas() {
           });
           context.stroke();
         });
+        setMode("draw");
       } else if (event.key === 'L' || event.key === 'l') {
         console.log('L pressed');
         context.clearRect(0, 0, canvas.width, canvas.height);
@@ -232,6 +327,7 @@ function DrawingCanvas() {
             context.stroke();
           }
         });
+        setMode("draw");
       }
     };
 
@@ -272,68 +368,74 @@ function DrawingCanvas() {
         context.stroke();
       }
     });
-  }, [strokes, mode, selectedStroke, selectedColor]);
+
+    curveMetadata.forEach((curve, index) => {
+      context.beginPath();
+      context.moveTo(curve.startX, curve.startY);
+      context.bezierCurveTo(
+        curve.controlX1, curve.controlY1,
+        curve.controlX2, curve.controlY2,
+        curve.endX, curve.endY
+      );
+      context.lineWidth = curve.width;
+      context.strokeStyle = curve.color;
+
+      if (mode === 'select') {
+        context.globalAlpha = 0.1;
+      } else {
+        context.globalAlpha = 1;
+      }
+      context.stroke();
+    });
+  }, [strokes, mode, selectedStroke, selectedColor, curveMetadata]);
+
+  // all bezier curve is under this
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
-    if (mode === "curve") {
-      const handleMouseDown = (event: MouseEvent) => {
-        setIsDrawingCurve(true);
-        setControlPoints([{ x: event.clientX, y: event.clientY }]);
-      };
-  
-      const handleMouseMove = (event: MouseEvent) => {
-        if (!isDrawingCurve) return;
-        setControlPoints((prevPoints) => [...prevPoints, { x: event.clientX, y: event.clientY }]);
-      };
-  
-      const handleMouseUp = () => {
-        setIsDrawingCurve(false);
-        // Perform additional actions after releasing the mouse button if needed
-      };
-  
-      canvas.addEventListener('mousedown', handleMouseDown);
-      canvas.addEventListener('mousemove', handleMouseMove);
-      canvas.addEventListener('mouseup', handleMouseUp);
-  
-      return () => {
-        canvas.removeEventListener('mousedown', handleMouseDown);
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseup', handleMouseUp);
-      };
-    }
-  }, [isDrawingCurve, mode]);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const context = canvas.getContext('2d');
-    if (!context) return;
-
     if (mode === 'curve') {
-      context.clearRect(0, 0, canvas.width, canvas.height);
-
-      if (controlPoints.length === 4) {
-        context.beginPath();
-        context.moveTo(controlPoints[0].x, controlPoints[0].y);
-        context.bezierCurveTo(
-          controlPoints[1].x,
-          controlPoints[1].y,
-          controlPoints[2].x,
-          controlPoints[2].y,
-          controlPoints[3].x,
-          controlPoints[3].y
-        );
-        context.stroke();
+      if (canvasRef.current) {
+        const context = canvasRef.current.getContext('2d');
+        if (context) {
+          // Draw points
+          bezierPoints.forEach(bezierPoint => {
+            context.beginPath();
+            context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
+            context.fill();
+          });
+  
+          // Draw the curve if four points are present
+          if (bezierPoints.length === 4) {
+            setCurveMetadata(prev => [
+              ...prev, 
+              {
+                  startX: bezierPoints[0].x,
+                  startY: bezierPoints[0].y,
+                  controlX1: bezierPoints[2].x,
+                  controlY1: bezierPoints[2].y,
+                  controlX2: bezierPoints[3].x,
+                  controlY2: bezierPoints[3].y,
+                  endX: bezierPoints[1].x,
+                  endY: bezierPoints[1].y,
+                  width: widthValue,
+                  color: selectedColor,
+              }
+          ]);
+            context.beginPath();
+            context.moveTo(bezierPoints[0].x, bezierPoints[0].y);
+            context.bezierCurveTo(
+              bezierPoints[2].x, bezierPoints[2].y,
+              bezierPoints[3].x, bezierPoints[3].y,
+              bezierPoints[1].x, bezierPoints[1].y
+            );
+            context.stroke();
+  
+            // Clear points
+            setBezierPoints([]);
+          }
+        }
       }
     }
-  }, [controlPoints, mode]);
+  }, [bezierPoints, mode, selectedColor, widthValue]);
 
   return (
     <div className='main'>
@@ -342,12 +444,14 @@ function DrawingCanvas() {
         width={window.innerWidth}
         height={window.innerHeight}
         className='canvas'
+        style={{ position: 'absolute', left: 0, top: 0 }}
       />
       <div className='buttons'>
         {mode === "draw" ? <SelectedButton onClick={() => setMode('draw')}>Draw</SelectedButton> : <Button onClick={() => setMode('draw')}>Draw</Button>}
         {mode === "erase" ? <SelectedButton onClick={() => setMode('erase')}>Erase</SelectedButton> : <Button onClick={() => setMode('erase')}>Erase</Button>}
         {mode === "select" ? <SelectedButton onClick={() => setMode('select')}>Select</SelectedButton> : <Button onClick={() => setMode('select')}>Select</Button>}
         {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}>Curve</SelectedButton> : <Button onClick={() => setMode('curve')}>Curve</Button>}
+        {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}>Laser</SelectedButton> : <Button onClick={() => setMode('laser')}>Laser</Button>}
         <input
           type="color"
           value={selectedColor}
