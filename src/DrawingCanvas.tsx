@@ -1,4 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
+import Tippy from '@tippy.js/react';
+import 'tippy.js/dist/tippy.css';
 import styled from 'styled-components';
 import './style.css'
 import drawIcon from './svgs/draw.svg';
@@ -101,7 +103,6 @@ function DrawingCanvas() {
       if (mode === 'erase') {
         const clickedStrokeIndex = findClickedStroke(offsetX, offsetY);
         if (clickedStrokeIndex !== null) {
-          // Erase the entire stroke
           setStrokes((prevStrokes) => [
             ...prevStrokes.slice(0, clickedStrokeIndex),
             ...prevStrokes.slice(clickedStrokeIndex + 1),
@@ -117,7 +118,6 @@ function DrawingCanvas() {
         const y = offsetY;
         setBezierPoints(prev => [...prev, { x, y }]);
       } else {
-        // Start drawing new strokes
         setIsDrawing(true);
         setStrokes((prevStrokes) => [...prevStrokes, [{ x: offsetX, y: offsetY, width: widthValue, color: selectedColor }]]);
       }
@@ -139,7 +139,6 @@ function DrawingCanvas() {
     };
 
     const findClickedStroke = (x: number, y: number): number | null => {
-      // Iterate through strokes and find if the click is inside any stroke
       for (let i = strokes.length - 1; i >= 0; i--) {
         const path = new Path2D();
         path.moveTo(strokes[i][0].x, strokes[i][0].y);
@@ -178,13 +177,12 @@ function DrawingCanvas() {
 
     const handleWheel = (event: WheelEvent) => {
       if (mode === 'select' && selectedStroke !== null) {
-        const delta = Math.sign(event.deltaY) * 1; // This controls the rate of change in stroke width
+        const delta = Math.sign(event.deltaY) * 1; 
         setStrokes(prevStrokes => {
           const newStrokes = [...prevStrokes];
           const currentStroke = newStrokes[selectedStroke];
-          const newWidth = Math.max(1, currentStroke[0].width + delta); // Ensures width doesn't go below 1
-    
-          // Update width for each point in the stroke
+          const newWidth = Math.max(1, currentStroke[0].width + delta);
+
           newStrokes[selectedStroke] = currentStroke.map(point => ({
             ...point,
             width: newWidth
@@ -261,7 +259,6 @@ function DrawingCanvas() {
           context.stroke();
         });
         
-        // Draw the short trail
         if (mousePositions.length > 1) {
           context.beginPath();
           context.moveTo(mousePositions[0].x, mousePositions[0].y);
@@ -318,7 +315,6 @@ function DrawingCanvas() {
           
           context.clearRect(0, 0, canvas.width, canvas.height);
           context.beginPath();
-          // If not selected, draw the current stroke
           stroke.forEach(({ x, y, width }, i) => {
             if (i === 0) {
               context.moveTo(x, y);
@@ -338,18 +334,16 @@ function DrawingCanvas() {
           context.beginPath();
         
           if (mode === 'select' && index === selectedStroke) {
-            // If selected, redraw as a line from strokes[index][0] to strokes[index][-1]
             const start = stroke[0];
             const end = stroke[stroke.length - 1];
         
             context.moveTo(start.x, start.y);
             context.lineTo(end.x, end.y);
-            context.lineWidth = end.width; // Set line width to the end of the stroke
+            context.lineWidth = end.width;
             context.strokeStyle = selectedColor;
             context.stroke();
             strokes[index] = [start, end];
           } else {
-            // If not selected, draw the current stroke
             stroke.forEach(({ x, y, width, color }, i) => {
               if (i === 0) {
                 context.moveTo(x, y);
@@ -393,7 +387,6 @@ function DrawingCanvas() {
             context.stroke();
           } else {
             context.beginPath();
-            // If not selected, draw the current stroke
             stroke.forEach(({ x, y, width }, i) => {
               if (i === 0) {
                 context.moveTo(x, y);
@@ -488,14 +481,12 @@ function DrawingCanvas() {
       if (canvasRef.current) {
         const context = canvasRef.current.getContext('2d');
         if (context) {
-          // Draw points
           bezierPoints.forEach(bezierPoint => {
             context.beginPath();
             context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
             context.fill();
           });
   
-          // Draw the curve if four points are present
           if (bezierPoints.length === 4) {
             setCurveMetadata(prev => [
               ...prev, 
@@ -520,8 +511,6 @@ function DrawingCanvas() {
               bezierPoints[1].x, bezierPoints[1].y
             );
             context.stroke();
-  
-            // Clear points
             setBezierPoints([]);
           }
         }
@@ -543,55 +532,55 @@ function DrawingCanvas() {
         {
           mode === "draw" 
           ? <SelectedButton onClick={() => setMode('draw')}>
-              <img src={drawIcon} alt='Draw'/>
-            </SelectedButton> 
+              <Tippy content="Draw" placement="right" arrow={false}><img src={drawIcon} alt='Draw'/></Tippy>
+            </SelectedButton>
           : <Button onClick={() => setMode('draw')}>
-              <img src={drawIcon} alt='Draw'/>
+              <Tippy content="Draw" placement="right" arrow={false}><img src={drawIcon} alt='Draw'/></Tippy>
             </Button>
         }
         {
           mode === "erase" 
-          ? <SelectedButton onClick={() => setMode('erase')}>
-              <img src={eraseIcon} alt='Erase'/>
+          ? <SelectedButton title='Erase' onClick={() => setMode('erase')}>
+              <Tippy content="Erase" placement="right" arrow={false}><img src={eraseIcon} alt='Erase'/></Tippy>
             </SelectedButton> 
-          : <Button onClick={() => setMode('erase')}>
-              <img src={eraseIcon} alt='Erase'/>
+          : <Button title='Erase' onClick={() => setMode('erase')}>
+              <Tippy content="Erase" placement="right" arrow={false}><img src={eraseIcon} alt='Erase'/></Tippy>
             </Button>
         }
         {
           mode === "select" 
-          ? <SelectedButton onClick={() => setMode('select')}>
-              <img src={pawIcon} alt='Select'/>
+          ? <SelectedButton title='Select' onClick={() => setMode('select')}>
+              <Tippy content="Select" placement="right" arrow={false}><img src={pawIcon} alt='Select'/></Tippy>
             </SelectedButton> 
-          : <Button onClick={() => setMode('select')}>
-              <img src={pawIcon} alt='Select'/>
+          : <Button title='Select' onClick={() => setMode('select')}>
+              <Tippy content="Select" placement="right" arrow={false}><img src={pawIcon} alt='Select'/></Tippy>
             </Button>
         }
         {
           mode === "curve" 
-          ? <SelectedButton onClick={() => setMode('curve')}>
-            <img src={curveIcon} alt='Curve'/>
+          ? <SelectedButton title='Curve' onClick={() => setMode('curve')}>
+              <Tippy content="Curve" placement="right" arrow={false}><img src={curveIcon} alt='Curve'/></Tippy>
             </SelectedButton> 
-          : <Button onClick={() => setMode('curve')}>
-              <img src={curveIcon} alt='Curve'/>
+          : <Button title='Curve' onClick={() => setMode('curve')}>
+              <Tippy content="Curve" placement="right" arrow={false}><img src={curveIcon} alt='Curve'/></Tippy>
             </Button>
         }
         {
           mode === "laser" 
-          ? <SelectedButton onClick={() => setMode('laser')}>
-              <img src={laserIcon} alt='Laser'/>
+          ? <SelectedButton title='Laser Pointer' onClick={() => setMode('laser')}>
+              <Tippy content="Laser" placement="right" arrow={false}><img src={laserIcon} alt='Laser'/></Tippy>
             </SelectedButton> 
-          : <Button onClick={() => setMode('laser')}>
-              <img src={laserIcon} alt='Laser'/>
+          : <Button title='Laser Pointer' onClick={() => setMode('laser')}>
+              <Tippy content="Laser" placement="right" arrow={false}><img src={laserIcon} alt='Laser'/></Tippy>
             </Button>
         }
         {
           mode === "clear" 
-          ? <SelectedButton onClick={() => setMode('clear')}>
-              <img src={dookieIcon} alt='Clear'/>
+          ? <SelectedButton title='Clear' onClick={() => setMode('clear')}>
+              <Tippy content="Clear" placement="right" arrow={false}><img src={dookieIcon} alt='Clear'/></Tippy>
             </SelectedButton> 
-          : <Button onClick={() => {setMode('clear'); confirmClear()}}>
-              <img src={dookieIcon} alt='Clear'/>
+          : <Button title='Clear' onClick={() => {setMode('clear'); confirmClear()}}>
+              <Tippy content="Clear" placement="right" arrow={false}><img src={dookieIcon} alt='Clear'/></Tippy>
             </Button>
         }
         <input
@@ -602,13 +591,25 @@ function DrawingCanvas() {
             width: '50px',
             height: '50px',
             borderRadius: '10px',
-            appearance: 'none', // Remove default styles (e.g., iOS appearance)
-            outline: 'none', // Remove outline on focus
+            appearance: 'none',
+            outline: 'none',
             border: '1px solid #89CFF0',
             backgroundColor: selectedColor,
           }}
         />
-        {showWidthSlider ? <SelectedButton onClick={handleSliderClick}><img src={fatcatIcon} alt='Width'/></SelectedButton> : <Button onClick={handleSliderClick}><img src={fatcatIcon} alt='Width'/></Button>}
+        {
+          showWidthSlider 
+            ? <SelectedButton title='Stroke Width' onClick={handleSliderClick}>
+                <Tippy content="Stroke Width" placement="right" arrow={false}>
+                  <img src={fatcatIcon} alt='Width'/>
+                </Tippy>
+              </SelectedButton> 
+            : <Button title='Stroke Width' onClick={handleSliderClick}>
+                <Tippy content="Stroke Width" placement="right" arrow={false}>
+                  <img src={fatcatIcon} alt='Width'/>
+                </Tippy>
+              </Button>
+        }
         {showWidthSlider && (
           <input
             type="range"
