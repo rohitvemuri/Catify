@@ -14,3 +14,18 @@
     flex-direction: column;
     gap: 10px;
 }
+
+.colorPicker {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+ }
+
+input::-webkit-color-swatch {
+    border: none;
+}
+
+input::-moz-color-swatch {
+    border: none;
+}
