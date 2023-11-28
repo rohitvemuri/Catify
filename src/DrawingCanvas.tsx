@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import ReactSVG from 'react-svg';
 import styled from 'styled-components';
 import './style.css'
 
@@ -456,12 +457,12 @@ function DrawingCanvas() {
         style={{ position: 'absolute', left: 0, top: 0 }}
       />
       <div className='buttons'>
-        {mode === "draw" ? <SelectedButton onClick={() => setMode('draw')}><img src="svgs/draw.svg"></img></SelectedButton> : <Button onClick={() => setMode('draw')}>Draw</Button>}
-        {mode === "erase" ? <SelectedButton onClick={() => setMode('erase')}><img src="svgs/erase.svg"></SelectedButton> : <Button onClick={() => setMode('erase')}>Erase</Button>}
+        {mode === "draw" ? <SelectedButton onClick={() => setMode('draw')}><ReactSVG src="svgs/draw.svg"/></SelectedButton> : <Button onClick={() => setMode('draw')}>Draw</Button>}
+        {mode === "erase" ? <SelectedButton onClick={() => setMode('erase')}><ReactSVG src="svgs/erase.svg"/></SelectedButton> : <Button onClick={() => setMode('erase')}>Erase</Button>}
         {mode === "select" ? <SelectedButton onClick={() => setMode('select')}>Select</SelectedButton> : <Button onClick={() => setMode('select')}>Select</Button>}
-        {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}><img src="svgs/curve.svg"></SelectedButton> : <Button onClick={() => setMode('curve')}>Curve</Button>}
-        {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}><img src="svgs/laser.svg"></SelectedButton> : <Button onClick={() => setMode('laser')}>Laser</Button>}
-        {mode === "clear" ? <SelectedButton onClick={() => setMode('clear')}><img src="svgs/dookie.svg"></SelectedButton> : <Button onClick={() => {setMode('clear'); confirmClear()}}>Clear</Button>}
+        {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}><ReactSVG src="svgs/curve.svg"/></SelectedButton> : <Button onClick={() => setMode('curve')}>Curve</Button>}
+        {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}><ReactSVG src="svgs/laser.svg"/></SelectedButton> : <Button onClick={() => setMode('laser')}>Laser</Button>}
+        {mode === "clear" ? <SelectedButton onClick={() => setMode('clear')}><ReactSVG src="svgs/dookie.svg"/></SelectedButton> : <Button onClick={() => {setMode('clear'); confirmClear()}}>Clear</Button>}
         <input
           type="color"
           value={selectedColor}
