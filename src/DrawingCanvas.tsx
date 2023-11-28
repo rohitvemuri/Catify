@@ -7,6 +7,7 @@ import curveIcon from './svgs/curve.svg';
 import laserIcon from './svgs/laser.svg';
 import pawIcon from './svgs/paw.png';
 import eraseIcon from './svgs/erase.svg';
+import fatcatIcon from './svgs/fatcat.png';
 
 const Button = styled.button`
   width: 50px;
@@ -538,12 +539,61 @@ function DrawingCanvas() {
         style={{ position: 'absolute', left: 0, top: 0 }}
       />
       <div className='buttons'>
-        {mode === "draw" ? <SelectedButton onClick={() => setMode('draw')}><img src={drawIcon} alt='Draw'/></SelectedButton> : <Button onClick={() => setMode('draw')}><img src={drawIcon} alt='Draw'/></Button>}
-        {mode === "erase" ? <SelectedButton onClick={() => setMode('erase')}><img src={eraseIcon} alt='Erase'/></SelectedButton> : <Button onClick={() => setMode('erase')}><img src={eraseIcon} alt='Erase'/></Button>}
-        {mode === "select" ? <SelectedButton onClick={() => setMode('select')}><img src={pawIcon} alt='Select'/></SelectedButton> : <Button onClick={() => setMode('select')}><img src={pawIcon} alt='Select'/></Button>}
-        {mode === "curve" ? <SelectedButton onClick={() => setMode('curve')}><img src={curveIcon} alt='Curve'/></SelectedButton> : <Button onClick={() => setMode('curve')}><img src={curveIcon} alt='Curve'/></Button>}
-        {mode === "laser" ? <SelectedButton onClick={() => setMode('laser')}><img src={laserIcon} alt='Laser'/></SelectedButton> : <Button onClick={() => setMode('laser')}><img src={laserIcon} alt='Laser'/></Button>}
-        {mode === "clear" ? <SelectedButton onClick={() => setMode('clear')}><img src={dookieIcon} alt='Clear'/></SelectedButton> : <Button onClick={() => {setMode('clear'); confirmClear()}}><img src={dookieIcon} alt='Clear'/></Button>}
+        {/* {logo} */}
+        {
+          mode === "draw" 
+          ? <SelectedButton onClick={() => setMode('draw')}>
+              <img src={drawIcon} alt='Draw'/>
+            </SelectedButton> 
+          : <Button onClick={() => setMode('draw')}>
+              <img src={drawIcon} alt='Draw'/>
+            </Button>
+        }
+        {
+          mode === "erase" 
+          ? <SelectedButton onClick={() => setMode('erase')}>
+              <img src={eraseIcon} alt='Erase'/>
+            </SelectedButton> 
+          : <Button onClick={() => setMode('erase')}>
+              <img src={eraseIcon} alt='Erase'/>
+            </Button>
+        }
+        {
+          mode === "select" 
+          ? <SelectedButton onClick={() => setMode('select')}>
+              <img src={pawIcon} alt='Select'/>
+            </SelectedButton> 
+          : <Button onClick={() => setMode('select')}>
+              <img src={pawIcon} alt='Select'/>
+            </Button>
+        }
+        {
+          mode === "curve" 
+          ? <SelectedButton onClick={() => setMode('curve')}>
+            <img src={curveIcon} alt='Curve'/>
+            </SelectedButton> 
+          : <Button onClick={() => setMode('curve')}>
+              <img src={curveIcon} alt='Curve'/>
+            </Button>
+        }
+        {
+          mode === "laser" 
+          ? <SelectedButton onClick={() => setMode('laser')}>
+              <img src={laserIcon} alt='Laser'/>
+            </SelectedButton> 
+          : <Button onClick={() => setMode('laser')}>
+              <img src={laserIcon} alt='Laser'/>
+            </Button>
+        }
+        {
+          mode === "clear" 
+          ? <SelectedButton onClick={() => setMode('clear')}>
+              <img src={dookieIcon} alt='Clear'/>
+            </SelectedButton> 
+          : <Button onClick={() => {setMode('clear'); confirmClear()}}>
+              <img src={dookieIcon} alt='Clear'/>
+            </Button>
+        }
         <input
           type="color"
           value={selectedColor}
@@ -558,7 +608,7 @@ function DrawingCanvas() {
             backgroundColor: selectedColor,
           }}
         />
-        {showWidthSlider ? <SelectedButton onClick={handleSliderClick}>Thicc</SelectedButton> : <Button onClick={handleSliderClick}>Thicc</Button>}
+        {showWidthSlider ? <SelectedButton onClick={handleSliderClick}><img src={fatcatIcon} alt='Width'/></SelectedButton> : <Button onClick={handleSliderClick}><img src={fatcatIcon} alt='Width'/></Button>}
         {showWidthSlider && (
           <input
             type="range"
