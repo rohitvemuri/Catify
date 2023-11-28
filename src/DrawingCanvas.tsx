@@ -3,6 +3,8 @@ import Tippy from '@tippy.js/react';
 import 'tippy.js/dist/tippy.css';
 import styled from 'styled-components';
 import './style.css'
+
+import logo from './svgs/kitty.png';
 import drawIcon from './svgs/draw.svg';
 import dookieIcon from './svgs/dookie.svg';
 import curveIcon from './svgs/curve.svg';
@@ -528,7 +530,7 @@ function DrawingCanvas() {
         style={{ position: 'absolute', left: 0, top: 0 }}
       />
       <div className='buttons'>
-        {/* {logo} */}
+        <img src={logo} alt='Catify' className='logo'/>
         {
           mode === "draw" 
           ? <SelectedButton onClick={() => setMode('draw')}>
