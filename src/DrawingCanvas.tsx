@@ -143,12 +143,14 @@ function DrawingCanvas() {
     const findClickedStroke = (x: number, y: number): number | null => {
       for (let i = strokes.length - 1; i >= 0; i--) {
         const path = new Path2D();
-        path.moveTo(strokes[i][0].x, strokes[i][0].y);
-        strokes[i].forEach(({ x, y }, index) => {
-          if (index !== 0) {
-            path.lineTo(x, y);
-          }
-        });
+        if (strokes[i].length > 0) {
+          path.moveTo(strokes[i][0].x, strokes[i][0].y);
+          strokes[i].forEach(({ x, y }, index) => {
+            if (index !== 0) {
+              path.lineTo(x, y);
+            }
+          });
+        }
 
         if (canvas && context.isPointInStroke(path, x, y)) {
           return i;
@@ -369,7 +371,7 @@ function DrawingCanvas() {
             const maxX = Math.max(...stroke.map(point => point.x));
             const maxY = Math.max(...stroke.map(point => point.y));
         
-            strokes[index] = []
+            strokes[index] = [];
 
             const centerX = (minX + maxX) / 2;
             const centerY = (minY + maxY) / 2;
@@ -387,6 +389,7 @@ function DrawingCanvas() {
             context.lineWidth = widthValue;
             context.strokeStyle = selectedColor;
             context.stroke();
+            // console.log(strokes.length)
           } else {
             context.beginPath();
             stroke.forEach(({ x, y, width }, i) => {
@@ -464,8 +467,8 @@ function DrawingCanvas() {
     circleMetadata.forEach((circle, index) => {
       context.beginPath();
       context.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
-      context.lineWidth = widthValue;
-      context.strokeStyle = selectedColor;
+      context.lineWidth = circle.width;
+      context.strokeStyle = circle.color;
 
       if (mode === 'select') {
         context.globalAlpha = 0.1;
