@@ -487,9 +487,49 @@ function DrawingCanvas() {
         const context = canvasRef.current.getContext('2d');
         if (context) {
           bezierPoints.forEach(bezierPoint => {
-            context.beginPath();
-            context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
-            context.fill();
+            if (bezierPoints.length === 3) {
+              context.beginPath();
+              context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
+              context.strokeStyle = "#red";
+              context.fill();
+
+              context.beginPath();
+              context.moveTo(bezierPoints[0].x, bezierPoints[0].y);
+              context.lineTo(bezierPoints[2].x, bezierPoints[2].y);
+              context.lineWidth = 1;
+              context.strokeStyle = "#202020";
+              context.stroke();
+              context.fill();
+            } else if (bezierPoints.length === 4) {
+              context.beginPath();
+              context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
+              context.strokeStyle = "lavender";
+              context.fill();
+
+              context.beginPath();
+              context.moveTo(bezierPoints[1].x, bezierPoints[1].y);
+              context.lineTo(bezierPoints[3].x, bezierPoints[3].y);
+              context.lineWidth = 1;
+              context.strokeStyle = "#202020";
+              context.stroke();
+              context.fill();
+            } else if (bezierPoints.length === 2) {
+              context.beginPath();
+              context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
+              context.fill();
+
+              context.beginPath();
+              context.moveTo(bezierPoints[0].x, bezierPoints[0].y);
+              context.lineTo(bezierPoints[1].x, bezierPoints[1].y);
+              context.lineWidth = 3;
+              context.strokeStyle = "#202020";
+              context.stroke();
+              context.fill();
+            } else {
+              context.beginPath();
+              context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
+              context.fill();
+            }
           });
   
           if (bezierPoints.length === 4) {
