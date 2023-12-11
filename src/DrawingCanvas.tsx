@@ -515,15 +515,15 @@ function DrawingCanvas() {
               context.fill();
             } else if (bezierPoints.length === 2) {
               context.beginPath();
-              context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
+              context.moveTo(bezierPoints[0].x, bezierPoints[0].y);
+              context.lineTo(bezierPoints[1].x, bezierPoints[1].y);
+              context.lineWidth = widthValue;
+              context.strokeStyle = selectedColor;
+              context.stroke();
               context.fill();
 
               context.beginPath();
-              context.moveTo(bezierPoints[0].x, bezierPoints[0].y);
-              context.lineTo(bezierPoints[1].x, bezierPoints[1].y);
-              context.lineWidth = 3;
-              context.strokeStyle = "#202020";
-              context.stroke();
+              context.arc(bezierPoint.x, bezierPoint.y, 5, 0, 2 * Math.PI);
               context.fill();
             } else {
               context.beginPath();
